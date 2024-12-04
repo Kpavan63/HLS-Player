@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced HLS Video Player</title>
+    
+    <!-- External CSS Libraries -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+
+    <style>
+        /* Updated CSS */
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: linear-gradient(135deg, #2c3e50, #34495e);
+            --text-color: #ecf0f1;
+            --accent-color: #e74c3c;
+            --dark-overlay: rgba(0,0,0,0.7);
+        }
+        /* General Styles */
+        body {
+            margin: 0;
+            background: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Arial', sans-serif;
+            overflow-x: hidden;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 10px;
+        }
+        .video-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 10px; /* Adjust margin bottom */
+        }
+        #player-wrapper {
+            position: relative;
+            aspect-ratio: 16 / 9;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+        video {
+            width: 100%;
+        }
+
+        /* Video name, rating, and logo */
+        .video-info {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 10px;
+            color: var(--text-color);
+        }
+        .video-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-transform: capitalize;
+        }
+        .video-rating {
+            display: flex;
+            align-items: center;
+            font-size: 18px;
+        }
+        .video-rating i {
+            color: #f39c12;
+            margin-right: 5px;
+        }
+
+        .logo {
+            width: 70px;
+            height: auto;
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-color);
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .advanced-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 0;
+            margin-bottom: 10px;
+        }
+
+        button, select {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        button:hover {
+            background: var(--secondary-color);
+        }
+        /* Container for the card layout */
+        /* Container for the card layout */
+.video-card {
+    background: rgba(255, 255, 255, 0.1); /* Slight background */
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 100px;
+    margin: 20px;
+    max-width: 20%; /* Allow full width on mobile */
+    width: 100%;
+    box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.3); /* Adding a subtle shadow to the card */
+    transition: transform 0.3s ease; /* Animation for hover effect */
+}
+
+/* Hover effect for desktop */
+.video-card:hover {
+    transform: translateY(-10px); /* Slight hover effect to lift the card */
+}
+
+/* Information inside the card */
+.video-info {
+    width: 100%;
+    color: var(--text-color);
+}
+
+/* Title styles */
+.video-title {
+    font-size: 20px; /* Adjust font size for mobile */
+    font-weight: bold;
+    text-transform: capitalize;
+    margin: 0;
+    padding-bottom: 8px;
+}
+
+/* Rating styles */
+.video-rating {
+    display: flex;
+    align-items: center;
+    font-size: 16px; /* Slightly smaller for mobile */
+    margin-bottom: 10px;
+}
+
+.video-rating i {
+    color: #f39c12; /* Yellow color for stars */
+    margin-right: 5px;
+}
+
+/* Description text */
+.video-description {
+    font-size: 14px; /* Adjust text size for mobile */
+    color: #bdc3c7;
+}
+
+/* Mobile-specific adjustments */
+@media (max-width: 768px) {
+    .video-card {
+        max-width: 100%; /* Ensure full width on mobile */
+        padding: 10px;
+        margin-left: -10px; /* Less padding on mobile */
+    }
+    
+    .video-title {
+        font-size: 18px; /* Adjust title size for mobile */
+    }
+
+    .video-rating {
+        font-size: 14px; /* Smaller rating font */
+    }
+
+    .video-description {
+        font-size: 12px; /* Smaller description font */
+    }
+}
+
+
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-container">
+            <!-- Logo for Netflix/Amazon Prime -->
+            <img src="https://donkey.to/_next/image?url=%2Fassets%2Fimages%2Flogo.png&w=256&q=30" alt="Logo" class="logo">
+            <br><br>
+            <!-- Video Player -->
+            <div id="player-wrapper">
+                <div class="loading-spinner"></div>
+                <video id="player" controls crossorigin="anonymous"></video>
+            </div>
+            
+            <!-- Video Information (Name and Rating) -->
+            <div class="video-card">
+                <div class="video-info">
+                    <div class="video-title">Amazing Movie</div>
+                    <div class="video-rating">
+                        <i class="fa fa-star"></i> 4.5/5
+                    </div>
+                    
+                </div>
+            </div>
+            
+            
+            <br><br>
+            <!-- Advanced Controls -->
+            <div class="advanced-controls">
+                <select id="quality-selector">
+                    <option value="">Quality</option>
+                </select>
+                <select id="audio-selector">
+                    <option value="">Audio</option>
+                </select>
+                <select id="playback-speed">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+                <button id="screenshot-btn">Screenshot</button>
+                <button id="pip-btn">Picture in Picture</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- External JS Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const playerElement = document.getElementById('player');
+            const qualitySelector = document.getElementById('quality-selector');
+            const audioSelector = document.getElementById('audio-selector');
+            const playbackSpeed = document.getElementById('playback-speed');
+            const screenshotBtn = document.getElementById('screenshot-btn');
+            const pipBtn = document.getElementById('pip-btn');
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            
+            let hls = null;
+            const notyf = new Notyf();
+
+            function initializePlayer(streamUrl) {
+                if (Hls.isSupported()) {
+                    if (hls) hls.destroy();
+                    hls = new Hls();
+                    hls.loadSource(streamUrl);
+                    hls.attachMedia(playerElement);
+
+                    hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                        loadingSpinner.style.display = 'none';
+                        populateQualityAndAudio();
+                        playerElement.play();
+                    });
+
+                    hls.on(Hls.Events.ERROR, (_, data) => {
+                        notyf.error(`Error: ${data.details}`);
+                    });
+                } else if (playerElement.canPlayType('application/vnd.apple.mpegurl')) {
+                    playerElement.src = streamUrl;
+                    playerElement.addEventListener('loadedmetadata', () => {
+                        loadingSpinner.style.display = 'none';
+                        playerElement.play();
+                    });
+                } else {
+                    notyf.error('HLS not supported.');
+                }
+            }
+
+            function populateQualityAndAudio() {
+                qualitySelector.innerHTML = '<option value="">Quality</option>';
+                hls.levels.forEach((level, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = `${level.height}p`;
+                    qualitySelector.appendChild(option);
+                });
+
+                audioSelector.innerHTML = '<option value="">Audio</option>';
+                hls.audioTracks.forEach((track, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = track.name || `Audio ${i + 1}`;
+                    audioSelector.appendChild(option);
+                });
+            }
+
+            qualitySelector.addEventListener('change', () => {
+                hls.currentLevel = parseInt(qualitySelector.value, 10);
+            });
+
+            audioSelector.addEventListener('change', () => {
+                hls.audioTrack = parseInt(audioSelector.value, 10);
+            });
+
+            playbackSpeed.addEventListener('change', () => {
+                playerElement.playbackRate = parseFloat(playbackSpeed.value);
+            });
+
+            screenshotBtn.addEventListener('click', () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = playerElement.videoWidth;
+                canvas.height = playerElement.videoHeight;
+                canvas.getContext('2d').drawImage(playerElement, 0, 0);
+                canvas.toBlob(blob => {
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = 'screenshot.png';
+                    link.click();
+                });
+            });
+
+            pipBtn.addEventListener('click', async () => {
+                if (document.pictureInPictureElement) {
+                    await document.exitPictureInPicture();
+                } else if (playerElement.requestPictureInPicture) {
+                    await playerElement.requestPictureInPicture();
+                } else {
+                    notyf.error('PiP not supported.');
+                }
+            });
+
+            initializePlayer('https://tralvoxmoon.xyz/file2/PdSx6~Mqe1aOFVrYZfZWh068JXh9U237zKnECR5+YZj01G1wuRC4rTDaKAeDl5HYbTBKdwBuSN1JtOPA1f92hO0hObgnQtPSuKMSeMUjfBXJnpcGnjqIS25FUAcrwtoiz8GUMZuIcbc2HKQDfnk8mZpHPVBAyWXRgrf190J1xxU=/cGxheWxpc3QubTN1OA==.m3u8'); // Replace with actual video stream URL
+        });
+    </script>
+</body>
+</html>
