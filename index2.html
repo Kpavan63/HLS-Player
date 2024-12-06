@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced Video Player</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/themes/nano.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6.3.7/dist/tippy.css">
+    <style>
+        :root {
+            --primary-color: #3498db;
+            --secondary-color: #2ecc71;
+            --background-color: #1a1a2e;
+            --text-color: #ecf0f1;
+            --accent-color: #e74c3c;
+            --card-bg-color: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            font-family: 'Arial', sans-serif;
+            transition: background-color 0.3s ease;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .video-container {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+        }
+
+        #player-wrapper {
+            position: relative;
+            width: 100%;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        #player-wrapper video,
+        #player-wrapper iframe {
+            width: 100%;
+            height: 300px; /* Default height for mobile */
+        }
+
+        @media (min-width: 768px) {
+            #player-wrapper video,
+            #player-wrapper iframe {
+                height: 480px; /* Height for desktop */
+            }
+        }
+
+        .video-info {
+            margin-top: 15px;
+        }
+
+        .video-title {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .video-description {
+            font-size: 14px;
+            color: #bdc3c7;
+            margin-bottom: 15px;
+        }
+
+        .advanced-controls {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        button, select {
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            background: var(--primary-color);
+            color: white;
+            transition: background 0.3s ease;
+        }
+
+        button:hover, select:hover {
+            background: var(--secondary-color);
+        }
+
+        .loading-spinner {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 50px;
+            height: 50px;
+            border: 5px solid var(--primary-color);
+            border-top: 5px solid var(--secondary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: translate(-50%, -50%) rotate(0deg); }
+            100% { transform: translate(-50%, -50%) rotate(360deg); }
+        }
+
+        #color-picker {
+            margin-top: 15px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: var(--card-bg-color);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .stat-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+            color: var(--primary-color);
+        }
+
+        .stat-value {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 0.9em;
+            color: #bdc3c7;
+        }
+
+        #waveform {
+            margin-top: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        @media (max-width: 768px) {
+            .advanced-controls {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            .stats-grid {
+                display: flex;
+                overflow-x: auto;
+                scroll-snap-type: x mandatory;
+                -webkit-overflow-scrolling: touch;
+                scrollbar-width: none;
+                -ms-overflow-style: none;
+            }
+            .stats-grid::-webkit-scrollbar {
+                display: none;
+            }
+            .stat-card {
+                flex: 0 0 auto;
+                width: 200px;
+                margin-right: 15px;
+                scroll-snap-align: start;
+            }
+            .stat-card:last-child {
+                margin-right: 0;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .stat-card {
+                width: 150px;
+                padding: 15px;
+            }
+            .stat-icon {
+                font-size: 1.5em;
+            }
+            .stat-value {
+                font-size: 1.2em;
+            }
+            .stat-label {
+                font-size: 0.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="video-container">
+            <div id="player-wrapper">
+                <div class="loading-spinner"></div>
+                <video id="player" crossorigin="anonymous"></video>
+            </div>
+            <div class="video-info">
+                <h2 class="video-title">Advanced Video Player</h2>
+                <p class="video-description">Experience high-quality streaming with our feature-rich player.</p>
+            </div>
+            <div class="advanced-controls">
+                <select id="quality-selector">
+                    <option value="">Quality</option>
+                </select>
+                <select id="audio-selector">
+                    <option value="">Audio</option>
+                </select>
+                <select id="playback-speed">
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="1.5">1.5x</option>
+                    <option value="2">2x</option>
+                </select>
+                <button id="screenshot-btn" data-tippy-content="Take a screenshot">Screenshot</button>
+                <button id="pip-btn" data-tippy-content="Enter picture-in-picture mode">PiP</button>
+                <button id="theme-toggle" data-tippy-content="Toggle theme">Theme</button>
+            </div>
+            <div id="color-picker"></div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <i class="fas fa-eye stat-icon"></i>
+                    <div class="stat-value" id="view-count">0</div>
+                    <div class="stat-label">Current Views</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-chart-line stat-icon"></i>
+                    <div class="stat-value" id="total-views">0</div>
+                    <div class="stat-label">Total Views</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-users stat-icon"></i>
+                    <div class="stat-value" id="peak-viewers">0</div>
+                    <div class="stat-label">Peak Viewers</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-tachometer-alt stat-icon"></i>
+                    <div class="stat-value"><span id="fps">0</span> FPS</div>
+                    <div class="stat-label">Frame Rate</div>
+                </div>
+                <div class="stat-card">
+                    <i class="fas fa-network-wired stat-icon"></i>
+                    <div class="stat-value"><span id="speed">0</span> Mbps</div>
+                    <div class="stat-label">Network Speed</div>
+                </div>
+            </div>
+            <div id="waveform"></div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/hls.js@latest"></script>
+    <script src="https://cdn.jsdelivr.net/npm/plyr@3.7.8/dist/plyr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@simonwep/pickr/dist/pickr.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/wavesurfer.js@6.6.3/dist/wavesurfer.min.js"></script>
+    <script src="https://unpkg.com/@popperjs/core@2"></script>
+    <script src="https://unpkg.com/tippy.js@6"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.0/color-thief.umd.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const playerElement = document.getElementById('player');
+            const playerWrapper = document.getElementById('player-wrapper');
+            const qualitySelector = document.getElementById('quality-selector');
+            const audioSelector = document.getElementById('audio-selector');
+            const playbackSpeed = document.getElementById('playback-speed');
+            const screenshotBtn = document.getElementById('screenshot-btn');
+            const pipBtn = document.getElementById('pip-btn');
+            const themeToggle = document.getElementById('theme-toggle');
+            const loadingSpinner = document.querySelector('.loading-spinner');
+            const viewCount = document.getElementById('view-count');
+            const networkSpeed = document.getElementById('speed');
+            const fpsCounter = document.getElementById('fps');
+            const totalViews = document.getElementById('total-views');
+            const peakViewers = document.getElementById('peak-viewers');
+            
+            let hls = null;
+            const notyf = new Notyf();
+            let views = 84754;
+            let peakViewerCount = 0;
+            let isBlackTheme = false;
+
+            // FPS monitoring
+            let lastTime = performance.now();
+            let frames = 0;
+
+            function toggleAdvancedControls(show) {
+                const advancedControls = document.querySelector('.advanced-controls');
+                const colorPicker = document.getElementById('color-picker');
+                const waveform = document.getElementById('waveform');
+                
+                if (show) {
+                    advancedControls.style.display = 'grid';
+                    colorPicker.style.display = 'block';
+                    waveform.style.display = 'block';
+                } else {
+                    advancedControls.style.display = 'none';
+                    colorPicker.style.display = 'none';
+                    waveform.style.display = 'none';
+                }
+            }
+
+            function initializePlayer(streamUrl) {
+                const [hlsUrl, iframeUrl] = streamUrl.split('#');
+
+                if (iframeUrl) {
+                    loadIframe(decodeURIComponent(iframeUrl));
+                } else {
+                    toggleAdvancedControls(true);
+                    if (Hls.isSupported()) {
+                        if (hls) hls.destroy();
+                        hls = new Hls();
+                        hls.loadSource(hlsUrl);
+                        hls.attachMedia(playerElement);
+
+                        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+                            loadingSpinner.style.display = 'none';
+                            populateQualityAndAudio();
+                            playerElement.play();
+                            updateViewCount();
+                            wavesurfer.load(hlsUrl);
+                        });
+
+                        hls.on(Hls.Events.ERROR, (_, data) => {
+                            notyf.error(Error: ${data.details});
+                        });
+                    } else if (playerElement.canPlayType('application/vnd.apple.mpegurl')) {
+                        playerElement.src = hlsUrl;
+                        playerElement.addEventListener('loadedmetadata', () => {
+                            loadingSpinner.style.display = 'none';
+                            playerElement.play();
+                            updateViewCount();
+                            wavesurfer.load(hlsUrl);
+                        });
+                    } else {
+                        notyf.error('HLS not supported.');
+                    }
+                }
+            }
+
+            function loadIframe(iframeUrl) {
+                const iframe = document.createElement('iframe');
+                iframe.src = iframeUrl;
+                iframe.width = '100%';
+                iframe.height = '100%';
+                iframe.allowFullscreen = true;
+                
+                playerWrapper.innerHTML = '';
+                playerWrapper.appendChild(iframe);
+                
+                loadingSpinner.style.display = 'none';
+                updateViewCount();
+                toggleAdvancedControls(false);
+            }
+
+            function populateQualityAndAudio() {
+                qualitySelector.innerHTML = '<option value="">Quality</option>';
+                hls.levels.forEach((level, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = ${level.height}p;
+                    qualitySelector.appendChild(option);
+                });
+
+                audioSelector.innerHTML = '<option value="">Audio</option>';
+                hls.audioTracks.forEach((track, i) => {
+                    const option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = track.name || Audio ${i + 1};
+                    audioSelector.appendChild(option);
+                });
+            }
+
+            function updateViewCount() {
+                setInterval(() => {
+                    views += Math.floor(Math.random() * 100);
+                    viewCount.textContent = views.toLocaleString();
+                    totalViews.textContent = views.toLocaleString();
+                    updatePeakViewers();
+                }, 3000);
+            }
+
+            function updatePeakViewers() {
+                const currentViewers = Math.floor(views * (0.1 + Math.random() * 0.3));
+                peakViewerCount = Math.max(peakViewerCount, currentViewers);
+                peakViewers.textContent = peakViewerCount.toLocaleString();
+            }
+
+            qualitySelector.addEventListener('change', () => {
+                hls.currentLevel = parseInt(qualitySelector.value, 10);
+            });
+
+            audioSelector.addEventListener('change', () => {
+                hls.audioTrack = parseInt(audioSelector.value, 10);
+            });
+
+            playbackSpeed.addEventListener('change', () => {
+                playerElement.playbackRate = parseFloat(playbackSpeed.value);
+            });
+
+            screenshotBtn.addEventListener('click', () => {
+                const canvas = document.createElement('canvas');
+                canvas.width = playerElement.videoWidth;
+                canvas.height = playerElement.videoHeight;
+                canvas.getContext('2d').drawImage(playerElement, 0, 0);
+                canvas.toBlob(blob => {
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = 'screenshot.png';
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                });
+                notyf.success('Screenshot saved!');
+            });
+
+            pipBtn.addEventListener('click', async () => {
+                try {
+                    if (document.pictureInPictureElement) {
+                        await document.exitPictureInPicture();
+                    } else if (playerElement.requestPictureInPicture) {
+                        await playerElement.requestPictureInPicture();
+                    } else {
+                        throw new Error('PiP not supported.');
+                    }
+                } catch (error) {
+                    notyf.error(error.message);
+                }
+            });
+
+            themeToggle.addEventListener('click', () => {
+                isBlackTheme = !isBlackTheme;
+                document.body.style.backgroundColor = isBlackTheme ? 'black' : 'var(--background-color)';
+                notyf.success(Switched to ${isBlackTheme ? 'black' : 'default'} theme);
+            });
+
+            // Color picker initialization
+            const pickr = Pickr.create({
+                el: '#color-picker',
+                theme: 'nano',
+                default: '#3498db',
+                swatches: [
+                    '#1abc9c', '#2ecc71', '#3498db', '#9b59b6', '#34495e',
+                    '#16a085', '#27ae60', '#2980b9', '#8e44ad', '#2c3e50',
+                    '#f1c40f', '#e67e22', '#e74c3c', '#ecf0f1', '#95a5a6',
+                    '#f39c12', '#d35400', '#c0392b', '#bdc3c7', '#7f8c8d'
+                ],
+                components: {
+                    preview: true,
+                    opacity: true,
+                    hue: true,
+                    interaction: {
+                        hex: true,
+                        rgba: true,
+                        hsla: true,
+                        hsva: true,
+                        cmyk: true,
+                        input: true,
+                        clear: true,
+                        save: true
+                    }
+                }
+            });
+
+            pickr.on('save', (color) => {
+                document.documentElement.style.setProperty('--primary-color', color.toHEXA().toString());
+            });
+
+            // Initialize Plyr
+            const player = new Plyr(playerElement, {
+                controls: [
+                    'play-large', 'play', 'progress', 'current-time', 'mute',
+                    'volume', 'captions', 'settings', 'pip', 'airplay', 'fullscreen'
+                ]
+            });
+
+            // Update network speed
+            setInterval(() => {
+                const randomSpeed = (Math.random() * 8 + 2).toFixed(2); // Random speed between 2 and 10 Mbps
+                networkSpeed.textContent = randomSpeed;
+            }, 1000);
+
+            // Update FPS counter
+            function updateFPS() {
+                const now = performance.now();
+                frames++;
+
+                if (now > lastTime + 1000) {
+                    const fps = Math.round((frames * 1000) / (now - lastTime));
+                    fpsCounter.textContent = fps;
+                    frames = 0;
+                    lastTime = now;
+                }
+
+                requestAnimationFrame(updateFPS);
+            }
+            updateFPS();
+
+            // Initialize tooltips
+            tippy('[data-tippy-content]');
+
+            // Initialize WaveSurfer
+            const wavesurfer = WaveSurfer.create({
+                container: '#waveform',
+                waveColor: 'violet',
+                progressColor: 'purple',
+                responsive: true
+            });
+
+            // Initialize the player with the HLS stream URL and iframe URL
+            const hlsUrl = '';
+            const iframeUrl = 'https://drive.google.com/file/d/1ySCbs3Tt3rOa9KEXPDqhlk8H2XWvGBlO/preview';
+            initializePlayer(${hlsUrl}#${encodeURIComponent(iframeUrl)});
+        });
+    </script>
+</body>
+</html>
