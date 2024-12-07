@@ -339,7 +339,7 @@
                         });
 
                         hls.on(Hls.Events.ERROR, (_, data) => {
-                            notyf.error(Error: ${data.details});
+                            notyf.error(`Error: ${data.details}`);
                         });
                     } else if (playerElement.canPlayType('application/vnd.apple.mpegurl')) {
                         playerElement.src = hlsUrl;
@@ -375,7 +375,7 @@
                 hls.levels.forEach((level, i) => {
                     const option = document.createElement('option');
                     option.value = i;
-                    option.textContent = ${level.height}p;
+                    option.textContent = `${level.height}p`;
                     qualitySelector.appendChild(option);
                 });
 
@@ -383,7 +383,7 @@
                 hls.audioTracks.forEach((track, i) => {
                     const option = document.createElement('option');
                     option.value = i;
-                    option.textContent = track.name || Audio ${i + 1};
+                    option.textContent = track.name || Audio `${i + 1}`;
                     audioSelector.appendChild(option);
                 });
             }
@@ -450,7 +450,7 @@
             themeToggle.addEventListener('click', () => {
                 isBlackTheme = !isBlackTheme;
                 document.body.style.backgroundColor = isBlackTheme ? 'black' : 'var(--background-color)';
-                notyf.success(Switched to ${isBlackTheme ? 'black' : 'default'} theme);
+                notyf.success(`Switched to ${isBlackTheme ? 'black' : 'default'} theme`);
             });
 
             // Color picker initialization
@@ -529,7 +529,7 @@
             // Initialize the player with the HLS stream URL and iframe URL
             const hlsUrl = '';
             const iframeUrl = 'https://drive.google.com/file/d/1ySCbs3Tt3rOa9KEXPDqhlk8H2XWvGBlO/preview';
-            initializePlayer(${hlsUrl}#${encodeURIComponent(iframeUrl)});
+            initializePlayer(`${hlsUrl}#${encodeURIComponent(iframeUrl)}`);
         });
     </script>
 </body>
